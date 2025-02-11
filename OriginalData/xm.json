@@ -913,15 +913,15 @@
         "data": "罗赛能第二次.wav",
         "label": 1,
         "source": "厦门医院",
-        "sex": "null",
-        "age": "null"
+        "sex": null,
+        "age": null
     },
     {
         "data": "罗赛能第三次.wav",
         "label": 2,
         "source": "厦门医院",
-        "sex": "null",
-        "age": "null"
+        "sex": null,
+        "age": null
     },
     {
         "data": "马永奎第二次.wav",
@@ -1032,22 +1032,22 @@
         "data": "沙马阿衣木第二次.wav",
         "label": 1,
         "source": "厦门医院",
-        "sex": "null",
-        "age": "null"
+        "sex": null,
+        "age": null
     },
     {
         "data": "沙马阿衣木第三次.wav",
         "label": 2,
         "source": "厦门医院",
-        "sex": "null",
-        "age": "null"
+        "sex": null,
+        "age": null
     },
     {
         "data": "沙马阿衣木第一次.wav",
         "label": 0,
         "source": "厦门医院",
-        "sex": "null",
-        "age": "null"
+        "sex": null,
+        "age": null
     },
     {
         "data": "石月香第二次.wav",
@@ -1242,8 +1242,8 @@
         "data": "肖婉梅第二次.wav",
         "label": 1,
         "source": "厦门医院",
-        "sex": "null",
-        "age": "null"
+        "sex": null,
+        "age": null
     },
     {
         "data": "肖碗梅第三次.wav",
@@ -1578,15 +1578,15 @@
         "data": "袁利第二次.wav",
         "label": 1,
         "source": "厦门医院",
-        "sex": "null",
-        "age": "null"
+        "sex": null,
+        "age": null
     },
     {
         "data": "袁利第三次.wav",
         "label": 2,
         "source": "厦门医院",
-        "sex": "null",
-        "age": "null"
+        "sex": null,
+        "age": null
     },
     {
         "data": "袁莉第一次.wav",

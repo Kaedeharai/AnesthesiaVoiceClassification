@@ -4560,14 +4560,14 @@
         "data": "丁一宁第二次.wav",
         "label": 1,
         "age": 29,
-        "sex": "女 ",
+        "sex": "女",
         "source": "江苏医院"
     },
     {
         "data": "丁一宁第一次.wav",
         "label": 0,
         "age": 29,
-        "sex": "女 ",
+        "sex": "女",
         "source": "江苏医院"
     },
     {
@@ -6538,8 +6538,8 @@
         "source": "江苏医院"
     },
     {
-        "data": "高淮菊.wav",
-        "label": null,
+        "data": "高淮菊第一次.wav",
+        "label": 0,
         "age": 65,
         "sex": "女",
         "source": "江苏医院"
@@ -10706,14 +10706,14 @@
         "data": "嵇靠山第二次.wav",
         "label": 1,
         "age": 46,
-        "sex": "2953-",
+        "sex": null,
         "source": "江苏医院"
     },
     {
         "data": "嵇靠山第一次.wav",
         "label": 0,
         "age": 46,
-        "sex": "2953-",
+        "sex": null,
         "source": "江苏医院"
     },
     {
@@ -18032,8 +18032,8 @@
         "source": "江苏医院"
     },
     {
-        "data": "陆春凤清.wav",
-        "label": null,
+        "data": "陆春凤第二次.wav",
+        "label": 1,
         "age": 46,
         "sex": "女",
         "source": "江苏医院"
@@ -19138,8 +19138,8 @@
         "source": "江苏医院"
     },
     {
-        "data": "马瑞云.wav",
-        "label": null,
+        "data": "马瑞云第三次.wav",
+        "label": 2,
         "age": 59,
         "sex": "男",
         "source": "江苏医院"
@@ -22900,14 +22900,14 @@
         "data": "宋鹏程贰第二次.wav",
         "label": 1,
         "age": 34,
-        "sex": "男 ",
+        "sex": "男",
         "source": "江苏医院"
     },
     {
         "data": "宋鹏程贰第一次.wav",
         "label": 0,
         "age": 34,
-        "sex": "男 ",
+        "sex": "男",
         "source": "江苏医院"
     },
     {
@@ -32154,21 +32154,21 @@
         "data": "徐继兰第二次.wav",
         "label": 1,
         "age": 51,
-        "sex": "女 ",
+        "sex": "女",
         "source": "江苏医院"
     },
     {
         "data": "徐继兰第三次.wav",
         "label": 2,
         "age": 51,
-        "sex": "女 ",
+        "sex": "女",
         "source": "江苏医院"
     },
     {
         "data": "徐继兰第一次.wav",
         "label": 0,
         "age": 51,
-        "sex": "女 ",
+        "sex": "女",
         "source": "江苏医院"
     },
     {
@@ -33106,14 +33106,14 @@
         "data": "许国明第二次.wav",
         "label": 1,
         "age": 52,
-        "sex": "男 ",
+        "sex": "男",
         "source": "江苏医院"
     },
     {
         "data": "许国明第一次.wav",
         "label": 0,
         "age": 52,
-        "sex": "男 ",
+        "sex": "男",
         "source": "江苏医院"
     },
     {
@@ -36466,14 +36466,14 @@
         "data": "于国宁第二次.wav",
         "label": 1,
         "age": 50,
-        "sex": "男 ",
+        "sex": "男",
         "source": "江苏医院"
     },
     {
         "data": "于国宁第一次.wav",
         "label": 0,
         "age": 50,
-        "sex": "男 ",
+        "sex": "男",
         "source": "江苏医院"
     },
     {
