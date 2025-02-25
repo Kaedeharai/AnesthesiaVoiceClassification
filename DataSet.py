@@ -9,20 +9,23 @@ import torch
 
 class AudioDataSet(Dataset):
 
-    # classes = ['0 - first', '1 - second', '2 - third']
-    # class_to_idx = {_class: i for i, _class in enumerate(classes)}
+    classes = ["before", "after", "recovery"]
+    default_class_to_idx = {_class: i for i, _class in enumerate(classes)}
 
-    def __init__(self, data_path, json_path, transform=None):
+    def __init__(self, data_path, json_path, transform=None, class_to_idx=None):
 
         self.transform = transform
         self.data_path = data_path
+        self.class_to_idx = class_to_idx if class_to_idx is not None else self.default_class_to_idx
         
         with open(json_path, 'r', encoding="utf-8") as f:
             self.json_dict = json.load(f)
-        
-        # for data in self.json_dict:
-            # data['label'] = self.class_to_idx[data['label']]
-        
+
+
+        for data in self.json_dict:
+            if data['label'] not in self.class_to_idx:
+                raise ValueError(f"Label '{data['label']}' not found in class_to_idx mapping.")
+            data['label'] = self.class_to_idx[data['label']]
 
     def __len__(self):
         return len(self.json_dict)
@@ -30,14 +33,14 @@ class AudioDataSet(Dataset):
     def __getitem__(self, index):
 
         data = self.json_dict[index]
-        file_path = data["featrue"]
+        file_path = os.path.join(self.data_path, data["featrue"])
 
         Data = np.load(file_path)
         if Data.ndim == 2:
-            Data = np.stack([Data] * 3, axis=-1)  # 将单通道图像复制为伪 RGB 图像
+            Data = np.stack([Data] * 3, axis=-1)
         Data = (Data * 255).astype(np.uint8)
         Data = Image.fromarray(Data)
-        label = int(data["label"])
+        label = data["label"]
         label = torch.tensor(label, dtype=torch.long)
 
         if self.transform:
