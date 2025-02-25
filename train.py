@@ -1,11 +1,10 @@
 import os
 import sys
-import json
 
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torchvision import transforms, datasets
+from torchvision import transforms
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
@@ -18,25 +17,25 @@ def main():
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     # print("using {} device.".format(device))
 
-    batch_size = 1
-    # nw = min([os.cpu_count(), batch_size if batch_size > 1 else 0, 8])
+    batch_size = 32
+    nw = min([os.cpu_count(), batch_size if batch_size > 1 else 0, 8])
     # print('Using {} dataloader workers every process'.format(nw))
-    nw = 0
+    # nw = 0
 
-    mean = 0.0
-    std = 0.225
+    # mean = 0.485
+    # std = 0.225
 
     data_transform = {
         "train": transforms.Compose([transforms.RandomResizedCrop(224),
                                      transforms.RandomHorizontalFlip(),
                                      transforms.ToTensor(),
-                                     # transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])]),
-                                     transforms.Normalize([mean, mean, mean], [std, std, std])]),
+                                     transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])]),
+                                    # transforms.Normalize([mean, mean, mean], [std, std, std])]),
         "val": transforms.Compose([transforms.Resize(256),
                                    transforms.CenterCrop(224),
                                    transforms.ToTensor(),
-                                   # transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])}
-                                   transforms.Normalize([mean, mean, mean], [std, std, std])])}
+                                   transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])}
+                                   # transforms.Normalize([mean, mean, mean], [std, std, std])])}
 
     # method = "mel"
     method = "mfcc"
@@ -58,26 +57,23 @@ def main():
                                  batch_size=batch_size, shuffle=False,
                                  num_workers=nw)
 
-    print("using {} images for training, {} images for validation.".format(train_num, val_num))
-    
 
-    net = resnet50()
+    net = resnet50(num_classes=3)
     model_weight_path = "resnet50pth.pth"
-    net.load_state_dict(torch.load(model_weight_path))
 
-    # in_channel = net.fc.in_features
-    in_channel = 2048
-    net.fc = nn.Linear(in_channel, 3)
+    state_dict = torch.load(model_weight_path, map_location=torch.device('cpu'))
+    state_dict.pop('fc.weight', None)
+    state_dict.pop('fc.bias', None)
+    net.load_state_dict(state_dict, strict=False)
     net.to(device)
 
-    # loss_function = nn.CrossEntropyLoss()
-    loss_function = nn.L1Loss()
 
-    # construct an optimizer
+    loss_function = nn.CrossEntropyLoss()
+
     params = [p for p in net.parameters() if p.requires_grad]
     optimizer = optim.Adam(params, lr=0.0001)
 
-    epochs = 3
+    epochs = 20
     best_acc = 0.0
     save_path = './resNet.pth'
     train_steps = len(train_loader)
@@ -91,9 +87,8 @@ def main():
             optimizer.zero_grad()
             logits = net(images.to(device))
             loss = loss_function(logits, labels.to(device))
-            loss.backward()# retain_graph=True)
+            loss.backward()
             optimizer.step()
-
             running_loss += loss.item()
 
             train_bar.desc = "train epoch[{}/{}] loss:{:.3f}".format(epoch + 1,
@@ -101,11 +96,10 @@ def main():
                                                                      loss)
 
 
-            
 
-        # validate
         net.eval()
-        acc = 0.0  # accumulate accurate number / epoch
+        # accumulate accurate number / epoch
+        acc = 0.0
         with torch.no_grad():
             val_bar = tqdm(validate_loader, file=sys.stdout)
             for val_data in val_bar:
