@@ -58,8 +58,8 @@ def main():
                                  num_workers=nw)
 
 
-    net = resnet50(num_classes=3)
-    model_weight_path = "resnet50pth.pth"
+    net = resnet18(num_classes=3)
+    model_weight_path = "resnet18pth.pth"
 
     state_dict = torch.load(model_weight_path, map_location=torch.device('cpu'))
     state_dict.pop('fc.weight', None)
@@ -73,7 +73,7 @@ def main():
     params = [p for p in net.parameters() if p.requires_grad]
     optimizer = optim.Adam(params, lr=0.0001)
 
-    epochs = 20
+    epochs = 200
     best_acc = 0.0
     save_path = './resNet.pth'
     train_steps = len(train_loader)

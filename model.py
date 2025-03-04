@@ -2,6 +2,37 @@ import torch.nn as nn
 import torch
 
 
+class BasicBlock(nn.Module):
+    expansion = 1
+
+    def __init__(self, in_channel, out_channel, stride=1, downsample=None, **kwargs):
+        super(BasicBlock, self).__init__()
+        self.conv1 = nn.Conv2d(in_channels=in_channel, out_channels=out_channel,
+                               kernel_size=3, stride=stride, padding=1, bias=False)
+        self.bn1 = nn.BatchNorm2d(out_channel)
+        self.relu = nn.ReLU()
+        self.conv2 = nn.Conv2d(in_channels=out_channel, out_channels=out_channel,
+                               kernel_size=3, stride=1, padding=1, bias=False)
+        self.bn2 = nn.BatchNorm2d(out_channel)
+        self.downsample = downsample
+
+    def forward(self, x):
+        identity = x
+        if self.downsample is not None:
+            identity = self.downsample(x)
+
+        out = self.conv1(x)
+        out = self.bn1(out)
+        out = self.relu(out)
+
+        out = self.conv2(out)
+        out = self.bn2(out)
+
+        out += identity
+        out = self.relu(out)
+
+        return out
+    
 class Block(nn.Module):
     # 卷积核变化的倍数 
     expansion = 4
@@ -78,7 +109,7 @@ class ResNet(nn.Module):
         self.layer4 = self._make_layer(block, 512, blocks_num[3], stride=2)
 
         if self.include_top:
-            self.avgpool = nn.AdaptiveAvgPool2d((1, 1))  # output size = (1, 1)
+            self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
             self.fc = nn.Linear(512 * block.expansion, num_classes)
 
         for m in self.modules():
@@ -131,3 +162,9 @@ class ResNet(nn.Module):
 def resnet50(num_classes=1000, include_top=True):
 
     return ResNet(Block, [3, 4, 6, 3], num_classes=num_classes, include_top=include_top)
+
+
+
+def resnet18(num_classes=1000, include_top=True):
+
+    return ResNet(BasicBlock, [2, 2, 2, 2], num_classes=num_classes, include_top=include_top)
