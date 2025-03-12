@@ -28,23 +28,32 @@ class AudioDataSet(Dataset):
             data['label'] = self.class_to_idx[data['label']]
 
     def __len__(self):
-        return len(self.json_dict)
+        length = 0
+        for data in self.json_dict:
+            if data["label"] != 2:
+                length += 1
+        return length
     
     def __getitem__(self, index):
+        while True:
+            data = self.json_dict[index]
+            file_path = os.path.join(self.data_path, data["featrue"])
 
-        data = self.json_dict[index]
-        file_path = os.path.join(self.data_path, data["featrue"])
+            Data = np.load(file_path)
 
-        Data = np.load(file_path)
-        if Data.ndim == 2:
-            Data = np.stack([Data] * 3, axis=-1)
-        Data = (Data * 255).astype(np.uint8)
-        Data = Image.fromarray(Data)
-        label = data["label"]
-        label = torch.tensor(label, dtype=torch.long)
+            if data["label"] != 2:
+                if Data.ndim == 2:
+                    Data = np.stack([Data] * 3, axis=-1)
+                Data = (Data * 255).astype(np.uint8)
+                Data = Image.fromarray(Data)
 
-        if self.transform:
-            Data = self.transform(Data)
-        return Data, label
+                label = data["label"]
+                label = torch.tensor(label, dtype=torch.long)
 
+                if self.transform:
+                    Data = self.transform(Data)
 
+                return Data, label
+
+            else:
+                index = (index + 1) % len(self.json_dict)

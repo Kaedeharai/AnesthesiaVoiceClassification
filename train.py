@@ -11,16 +11,44 @@ from tqdm import tqdm
 from model import *
 from DataSet import *
 
+from torch.utils.tensorboard import SummaryWriter
+write = SummaryWriter('runs/resnet18_binary')
+
+
+class Logger(object):
+    def __init__(self, filename='default.log', add_flag=True, stream=sys.stdout):
+        self.terminal = stream
+        # print("filename:", filename)
+        self.filename = filename
+        self.add_flag = add_flag
+        # self.log = open(filename, 'a+')
+
+    def write(self, message):
+        if self.add_flag:
+            with open(self.filename, 'a+') as log:
+                self.terminal.write(message)
+                log.write(message)
+        else:
+            with open(self.filename, 'w') as log:
+                self.terminal.write(message)
+                log.write(message)
+
+    def flush(self):
+        pass
+
 
 def main():
     os.environ['CUDA_VISIBLE_DEVICES'] = '0' 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     # print("using {} device.".format(device))
 
-    batch_size = 32
-    nw = min([os.cpu_count(), batch_size if batch_size > 1 else 0, 8])
+    batch_size = 64
+    # nw = min([os.cpu_count(), batch_size if batch_size > 1 else 0, 6])
     # print('Using {} dataloader workers every process'.format(nw))
-    # nw = 0
+    nw = 0
+
+    sys.stdout = Logger("TrainBin.log", sys.stdout)
+
 
     # mean = 0.485
     # std = 0.225
@@ -58,7 +86,7 @@ def main():
                                  num_workers=nw)
 
 
-    net = resnet18(num_classes=3)
+    net = resnet18(num_classes=2)
     model_weight_path = "resnet18pth.pth"
 
     state_dict = torch.load(model_weight_path, map_location=torch.device('cpu'))
@@ -73,15 +101,16 @@ def main():
     params = [p for p in net.parameters() if p.requires_grad]
     optimizer = optim.Adam(params, lr=0.0001)
 
-    epochs = 200
+    epochs = 50
     best_acc = 0.0
-    save_path = './resNet.pth'
+    save_path = './resNet_bin.pth'
     train_steps = len(train_loader)
     for epoch in range(epochs):
         # train
         net.train()
         running_loss = 0.0
         train_bar = tqdm(train_loader, file=sys.stdout)
+
         for step, data in enumerate(train_bar):
             images, labels = data
             optimizer.zero_grad()
@@ -90,6 +119,7 @@ def main():
             loss.backward()
             optimizer.step()
             running_loss += loss.item()
+            write.add_scalar('train_loss', loss.item(), epoch * train_steps + step)
 
             train_bar.desc = "train epoch[{}/{}] loss:{:.3f}".format(epoch + 1,
                                                                      epochs,
@@ -108,17 +138,21 @@ def main():
                 # loss = loss_function(outputs, test_labels)
                 predict_y = torch.max(outputs, dim=1)[1]
                 acc += torch.eq(predict_y, val_labels.to(device)).sum().item()
+                write.add_scalar('acc', acc, epoch * train_steps + step)
 
                 val_bar.desc = "valid epoch[{}/{}]".format(epoch + 1,
                                                            epochs)
 
         val_accurate = acc / val_num
+        write.add_scalar('val_accuracy', val_accurate, epoch)
         print('[epoch %d] train_loss: %.3f  val_accuracy: %.3f' %
               (epoch + 1, running_loss / train_steps, val_accurate))
 
         if val_accurate > best_acc:
             best_acc = val_accurate
             torch.save(net.state_dict(), save_path)
+
+    write.close()
     
     
     # 释放未使用的 GPU 内存
@@ -127,3 +161,15 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
+
+#TODO draw train loss curve, val loss curve,
+#TODO every 10 epochs, val acc --> curve, confusion matrix sklearn --> figure, json, classification_report
+
+
+#TODO train dataset shuffle, augmentation --> train model, val --> train dataset, val loss decrease very low
+#TODO dataset --> normalization , min_max . augmenatation
+
+
+#TODO model ? 
