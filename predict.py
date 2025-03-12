@@ -6,7 +6,7 @@ from PIL import Image
 from torchvision import transforms
 import matplotlib.pyplot as plt
 
-from model import resnet50
+from model import *
 
 def load_data_from_folder(folder_path):
     file_paths = []
@@ -37,8 +37,11 @@ def main():
 
     # Extract unique labels and create a class index dictionary
     labels = sorted(set(item['label'] for item in data_list if 'label' in item))
-    class_indict = {str(i): label for i, label in enumerate(labels)}
-    model = resnet50(num_classes=len(class_indict)).to(device)
+    class_indict = {label: i for i, label in enumerate(labels)}
+    reverse_class_indict = {i: label for label, i in class_indict.items()}
+
+    # model = resnet50(num_classes=len(class_indict)).to(device)
+    model = resnet18(num_classes=len(class_indict)).to(device)
 
     # load model weights
     weights_path = "resNet.pth"
@@ -46,14 +49,14 @@ def main():
     
     # Load the pre-trained model weights
     state_dict = torch.load(weights_path, map_location=device)
-    state_dict.pop('fc.weight', None)
-    state_dict.pop('fc.bias', None)
     model.load_state_dict(state_dict, strict=False)
 
     model.to(device)
 
-    # Create a mapping from file paths to labels
-    file_to_label = {os.path.normpath(os.path.join("D:\\AnesthesiaVoiceClassification", item['featrue'])): item['label'] for item in data_list}
+    # Create a mapping from file names to labels
+    file_to_label = {os.path.join(folder_path, item["featrue"]): item['label'] for i, item in enumerate(data_list)}
+    # file_to_label = class_indict[file_to_label]
+
 
     # prediction
     model.eval()
@@ -75,15 +78,21 @@ def main():
             output = torch.squeeze(model(img.to(device))).cpu()
             predict = torch.softmax(output, dim=0)
             predict_cla = torch.argmax(predict).numpy()
+            predict_cla = int(predict_cla)
+            predict_label = reverse_class_indict[predict_cla]
 
             # Get the true label from the JSON data
-            true_label = file_to_label[os.path.normpath(path)]
-            if class_indict[str(predict_cla)] == true_label:
+            # file_name = os.path.basename(path)
+            true_label = file_to_label[path]
+            # true_label = class_indict[true_label]
+
+            if predict_label == true_label:
                 correct += 1
             total += 1
 
     accuracy = correct / total
     print(f'Accuracy: {accuracy:.4f}')
+    # 0.3788
 
 if __name__ == '__main__':
     main()
