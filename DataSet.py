@@ -21,39 +21,35 @@ class AudioDataSet(Dataset):
         with open(json_path, 'r', encoding="utf-8") as f:
             self.json_dict = json.load(f)
 
-
+        self.json_bin = []
         for data in self.json_dict:
-            if data['label'] not in self.class_to_idx:
-                raise ValueError(f"Label '{data['label']}' not found in class_to_idx mapping.")
-            data['label'] = self.class_to_idx[data['label']]
+
+            if data['label'] == "before" or data['label'] == "after":
+                self.json_bin.append(data)
+                data['label'] = self.class_to_idx[data['label']]
+
 
     def __len__(self):
-        length = 0
-        for data in self.json_dict:
-            if data["label"] != 2:
-                length += 1
-        return length
+
+        return len(self.json_bin)
     
-    def __getitem__(self, index):
-        while True:
-            data = self.json_dict[index]
-            file_path = os.path.join(self.data_path, data["featrue"])
+    def __getitem__(self, index): 
 
-            Data = np.load(file_path)
+        data = self.json_bin[index]
+        featrue_path = os.path.join(self.data_path, data['featrue'])
+        label = data['label']
+        label = torch.tensor(label, dtype=torch.long)
 
-            if data["label"] != 2:
-                if Data.ndim == 2:
-                    Data = np.stack([Data] * 3, axis=-1)
-                Data = (Data * 255).astype(np.uint8)
-                Data = Image.fromarray(Data)
+        Data = np.load(featrue_path)
+        Data = np.stack([Data] * 3, axis=-1)
+        Data = Data.astype(np.uint8)
+        Data = torch.tensor(Data, dtype=torch.float32)
+        Data = Data.permute(2, 0, 1)
+        # Data = Image.fromarray(Data)
 
-                label = data["label"]
-                label = torch.tensor(label, dtype=torch.long)
-
-                if self.transform:
-                    Data = self.transform(Data)
-
-                return Data, label
-
-            else:
-                index = (index + 1) % len(self.json_dict)
+        # feature = torch.tensor(feature, dtype=torch.float32)
+    
+        if self.transform is not None:
+            feature = self.transform(feature)
+    
+        return Data, label

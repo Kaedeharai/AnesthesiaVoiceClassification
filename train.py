@@ -38,14 +38,14 @@ class Logger(object):
 
 
 def main():
-    os.environ['CUDA_VISIBLE_DEVICES'] = '0' 
+
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     # print("using {} device.".format(device))
 
     batch_size = 64
-    # nw = min([os.cpu_count(), batch_size if batch_size > 1 else 0, 6])
+    nw = min([os.cpu_count(), batch_size if batch_size > 1 else 0, 6])
     # print('Using {} dataloader workers every process'.format(nw))
-    nw = 0
+    # nw = 0
 
     sys.stdout = Logger("TrainBin.log", sys.stdout)
 
@@ -53,24 +53,25 @@ def main():
     # mean = 0.485
     # std = 0.225
 
-    data_transform = {
-        "train": transforms.Compose([transforms.RandomResizedCrop(224),
-                                     transforms.RandomHorizontalFlip(),
-                                     transforms.ToTensor(),
-                                     transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])]),
-                                    # transforms.Normalize([mean, mean, mean], [std, std, std])]),
-        "val": transforms.Compose([transforms.Resize(256),
-                                   transforms.CenterCrop(224),
-                                   transforms.ToTensor(),
-                                   transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])}
-                                   # transforms.Normalize([mean, mean, mean], [std, std, std])])}
+    # data_transform = {
+    #     "train": transforms.Compose([transforms.RandomResizedCrop(224),
+    #                                  transforms.RandomHorizontalFlip(),
+    #                                  transforms.ToTensor(),
+    #                                  transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])]),
+    #                                 # transforms.Normalize([mean, mean, mean], [std, std, std])]),
+    #     "val": transforms.Compose([transforms.Resize(256),
+    #                                transforms.CenterCrop(224),
+    #                                transforms.ToTensor(),
+    #                                transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])}
+    #                                # transforms.Normalize([mean, mean, mean], [std, std, std])])}
 
     # method = "mel"
     method = "mfcc"
 
     train_dataset = AudioDataSet(data_path=os.path.join("data/train", method),
-                                 json_path=os.path.join("data/train", method + ".json"),
-                                 transform=data_transform["train"])
+                                 json_path=os.path.join("data/train", method + ".json"))
+                                #  transform=data_transform["train"])
+
     train_num = len(train_dataset)
     train_loader = DataLoader(train_dataset,
                               batch_size=batch_size, shuffle=True,
@@ -78,8 +79,9 @@ def main():
 
 
     validate_dataset = AudioDataSet(data_path=os.path.join("data/val", method),
-                                    json_path=os.path.join("data/val", method + ".json"),
-                                    transform=data_transform["train"])
+                                    json_path=os.path.join("data/val", method + ".json"))
+                                    # transform=data_transform["train"])
+
     val_num = len(validate_dataset)
     validate_loader = DataLoader(validate_dataset,
                                  batch_size=batch_size, shuffle=False,
@@ -101,47 +103,62 @@ def main():
     params = [p for p in net.parameters() if p.requires_grad]
     optimizer = optim.Adam(params, lr=0.0001)
 
-    epochs = 50
+    epochs = 200
     best_acc = 0.0
-    save_path = './resNet_bin.pth'
+    save_path = './resNet18_bin.pth'
     train_steps = len(train_loader)
     for epoch in range(epochs):
         # train
         net.train()
         running_loss = 0.0
-        train_bar = tqdm(train_loader, file=sys.stdout)
+        # train_bar = tqdm(train_loader, file=sys.stdout)
 
-        for step, data in enumerate(train_bar):
+
+        for step, data in enumerate(train_loader, start=0):
             images, labels = data
             optimizer.zero_grad()
             logits = net(images.to(device))
             loss = loss_function(logits, labels.to(device))
+
             loss.backward()
             optimizer.step()
             running_loss += loss.item()
             write.add_scalar('train_loss', loss.item(), epoch * train_steps + step)
 
-            train_bar.desc = "train epoch[{}/{}] loss:{:.3f}".format(epoch + 1,
-                                                                     epochs,
-                                                                     loss)
+            print('[epoch %d, batch %d] loss: %.03f' %
+                  (epoch + 1, step + 1, loss.item()))
+            # train_bar.desc = "train epoch[{}/{}] loss:{:.3f}".format(epoch + 1,
+            #                                                          epochs,
+            #                                                          loss)
 
+            if step % 10 == 0:
+                write.add_scalar('train_loss_curve', running_loss / (step + 1), epoch * train_steps + step)
 
 
         net.eval()
         # accumulate accurate number / epoch
         acc = 0.0
+        val_loss = 0.0
         with torch.no_grad():
             val_bar = tqdm(validate_loader, file=sys.stdout)
             for val_data in val_bar:
                 val_images, val_labels = val_data
                 outputs = net(val_images.to(device))
                 # loss = loss_function(outputs, test_labels)
+
                 predict_y = torch.max(outputs, dim=1)[1]
                 acc += torch.eq(predict_y, val_labels.to(device)).sum().item()
                 write.add_scalar('acc', acc, epoch * train_steps + step)
+                loss = loss_function(outputs, val_labels.to(device))
+                val_loss += loss.item()
+                val_bar.desc = "valid epoch[{}/{}] loss:{:.3f} acc:{:.3f}".format(epoch + 1,
+                                                                                  epochs,
+                                                                                  loss,
+                                                                                  acc)
 
-                val_bar.desc = "valid epoch[{}/{}]".format(epoch + 1,
-                                                           epochs)
+                write.add_scalar('val_loss_curve', val_loss / len(validate_loader), epoch)
+
+
 
         val_accurate = acc / val_num
         write.add_scalar('val_accuracy', val_accurate, epoch)
