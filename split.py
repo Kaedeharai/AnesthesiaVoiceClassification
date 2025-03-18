@@ -50,7 +50,7 @@ def process_audio(file_path, median):
 # median = int(median) + 1
 # print(median)
 
-median = 10
+median = 8
 
 for filename in os.listdir('data/train'):
     file_path = os.path.join('data/train', filename)

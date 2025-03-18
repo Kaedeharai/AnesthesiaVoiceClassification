@@ -18,7 +18,7 @@ def clean_and_save_audio(input_file_path, output_file_path, threshold=-40.0):
 
     cleaned_audio = audio[start:end]
     cleaned_audio.export(output_file_path, format='wav')
-    print(f"Successfully processed and saved {input_file_path} to {output_file_path}")
+    # print(f"Successfully processed and saved {input_file_path} to {output_file_path}")
 
 
 def process_folder(input_folder, output_folder, threshold=-40.0):
@@ -38,6 +38,7 @@ def process_folder(input_folder, output_folder, threshold=-40.0):
                 clean_and_save_audio(input_file_path, output_file_path, threshold)
 
 
-input_folder = "jsmp3"
-output_folder = "data/train_jdsu"
+input_folder = "OriginalData/xwmf"
+output_folder = "rmslience"
 process_folder(input_folder, output_folder)
+print("Done")

@@ -7290,14 +7290,14 @@
         "data": "耿永芳第二次.wav",
         "label": 1,
         "age": 59,
-        "sex": " 女",
+        "sex": "女",
         "source": "江苏医院"
     },
     {
         "data": "耿永芳第一次.wav",
         "label": 0,
         "age": 59,
-        "sex": " 女",
+        "sex": "女",
         "source": "江苏医院"
     },
     {
