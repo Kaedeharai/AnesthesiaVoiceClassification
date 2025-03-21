@@ -52,6 +52,6 @@ def process_audio(file_path, median):
 
 median = 8
 
-for filename in os.listdir('data/train'):
-    file_path = os.path.join('data/train', filename)
+for filename in os.listdir('rmslience'):
+    file_path = os.path.join('rmslience', filename)
     process_audio(file_path, median)
