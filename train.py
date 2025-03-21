@@ -42,7 +42,7 @@ def main():
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     # print("using {} device.".format(device))
 
-    batch_size = 64
+    batch_size = 32
     nw = min([os.cpu_count(), batch_size if batch_size > 1 else 0, 6])
     # print('Using {} dataloader workers every process'.format(nw))
     # nw = 0
@@ -68,18 +68,18 @@ def main():
     # method = "mel"
     method = "mfcc"
 
-    train_dataset = AudioDataSet(data_path=os.path.join("data/train", method),
-                                 json_path=os.path.join("data/train", method + ".json"))
+    train_dataset = AudioDataSet(data_path=os.path.join(method, "train"),
+                                 json_path=os.path.join(method, "train.json"))
                                 #  transform=data_transform["train"])
 
     train_num = len(train_dataset)
     train_loader = DataLoader(train_dataset,
-                              batch_size=batch_size, shuffle=True,
+                              batch_size=batch_size, shuffle=False,
                               num_workers=nw)
 
 
-    validate_dataset = AudioDataSet(data_path=os.path.join("data/val", method),
-                                    json_path=os.path.join("data/val", method + ".json"))
+    validate_dataset = AudioDataSet(data_path=os.path.join(method, "val"),
+                                    json_path=os.path.join(method, "val.json"))
                                     # transform=data_transform["train"])
 
     val_num = len(validate_dataset)
@@ -101,7 +101,7 @@ def main():
     loss_function = nn.CrossEntropyLoss()
 
     params = [p for p in net.parameters() if p.requires_grad]
-    optimizer = optim.Adam(params, lr=0.0001)
+    optimizer = optim.Adam(params, lr=0.001)
 
     epochs = 200
     best_acc = 0.0
@@ -173,7 +173,7 @@ def main():
     
     
     # 释放未使用的 GPU 内存
-    # torch.cuda.empty_cache()
+    torch.cuda.empty_cache()
 
 
 if __name__ == '__main__':
