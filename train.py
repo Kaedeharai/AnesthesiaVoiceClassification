@@ -89,7 +89,7 @@ def main():
 
 
     net = resnet18(num_classes=2)
-    model_weight_path = "resnet18pth.pth"
+    model_weight_path = "resNet18_bin.pth"
 
     state_dict = torch.load(model_weight_path, map_location=torch.device('cpu'))
     state_dict.pop('fc.weight', None)
