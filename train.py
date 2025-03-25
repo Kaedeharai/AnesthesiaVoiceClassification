@@ -1,6 +1,6 @@
 import os
 import sys
-
+import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -12,7 +12,10 @@ from model import *
 from DataSet import *
 
 from torch.utils.tensorboard import SummaryWriter
-write = SummaryWriter('runs/resnet18_binary')
+from sklearn.metrics import confusion_matrix
+import seaborn as sns
+import numpy as np
+write = SummaryWriter('runs/resnet50_binary_mel')
 
 
 class Logger(object):
@@ -43,15 +46,11 @@ def main():
     # print("using {} device.".format(device))
 
     batch_size = 32
-    nw = min([os.cpu_count(), batch_size if batch_size > 1 else 0, 6])
+    # nw = min([os.cpu_count(), batch_size if batch_size > 1 else 0, 6])
     # print('Using {} dataloader workers every process'.format(nw))
-    # nw = 0
+    nw = 0
 
-    sys.stdout = Logger("TrainBin.log", sys.stdout)
-
-
-    # mean = 0.485
-    # std = 0.225
+    sys.stdout = Logger("Train50Bin_mel.log", sys.stdout)
 
     # data_transform = {
     #     "train": transforms.Compose([transforms.RandomResizedCrop(224),
@@ -65,8 +64,8 @@ def main():
     #                                transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])}
     #                                # transforms.Normalize([mean, mean, mean], [std, std, std])])}
 
-    # method = "mel"
-    method = "mfcc"
+    method = "mel"
+    # method = "mfcc"
 
     train_dataset = AudioDataSet(data_path=os.path.join(method, "train"),
                                  json_path=os.path.join(method, "train.json"))
@@ -89,7 +88,7 @@ def main():
 
 
     net = resnet18(num_classes=2)
-    model_weight_path = "resNet18_bin.pth"
+    model_weight_path = "resnet18pth.pth"
 
     state_dict = torch.load(model_weight_path, map_location=torch.device('cpu'))
     state_dict.pop('fc.weight', None)
@@ -101,18 +100,17 @@ def main():
     loss_function = nn.CrossEntropyLoss()
 
     params = [p for p in net.parameters() if p.requires_grad]
-    optimizer = optim.Adam(params, lr=0.001)
+    optimizer = optim.Adam(params, lr=0.0001)
 
-    epochs = 200
+    epochs = 100
     best_acc = 0.0
-    save_path = './resNet18_bin.pth'
+    save_path = './resNet18_bin_mel.pth'
     train_steps = len(train_loader)
     for epoch in range(epochs):
         # train
         net.train()
         running_loss = 0.0
         # train_bar = tqdm(train_loader, file=sys.stdout)
-
 
         for step, data in enumerate(train_loader, start=0):
             images, labels = data
@@ -122,6 +120,7 @@ def main():
 
             loss.backward()
             optimizer.step()
+
             running_loss += loss.item()
             write.add_scalar('train_loss', loss.item(), epoch * train_steps + step)
 
@@ -135,10 +134,11 @@ def main():
                 write.add_scalar('train_loss_curve', running_loss / (step + 1), epoch * train_steps + step)
 
 
-        net.eval()
-        # accumulate accurate number / epoch
+        all_preds = []
+        all_labels = []
         acc = 0.0
         val_loss = 0.0
+        net.eval()
         with torch.no_grad():
             val_bar = tqdm(validate_loader, file=sys.stdout)
             for val_data in val_bar:
@@ -149,15 +149,28 @@ def main():
                 predict_y = torch.max(outputs, dim=1)[1]
                 acc += torch.eq(predict_y, val_labels.to(device)).sum().item()
                 write.add_scalar('acc', acc, epoch * train_steps + step)
+                
                 loss = loss_function(outputs, val_labels.to(device))
                 val_loss += loss.item()
-                val_bar.desc = "valid epoch[{}/{}] loss:{:.3f} acc:{:.3f}".format(epoch + 1,
-                                                                                  epochs,
-                                                                                  loss,
-                                                                                  acc)
+                
+                all_preds.extend(predict_y.cpu().numpy())
+                all_labels.extend(val_labels.cpu().numpy())
+                val_bar.desc = "valid epoch[{}/{}] loss:{:.3f}".format(epoch + 1,
+                                                                       epochs,
+                                                                       loss)
 
                 write.add_scalar('val_loss_curve', val_loss / len(validate_loader), epoch)
 
+        if epoch % 10 == 0:
+
+            cm = confusion_matrix(all_labels, all_preds)
+            plt.figure(figsize=(10, 8))
+            sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=['Class 0', 'Class 1'], yticklabels=['Class 0', 'Class 1'])
+            plt.xlabel('Predicted')
+            plt.ylabel('True')
+            plt.title('Confusion Matrix')
+            plt.savefig(f'first_18_mel/confusion_matrix_epoch_{epoch}.png')
+            plt.close()
 
 
         val_accurate = acc / val_num
