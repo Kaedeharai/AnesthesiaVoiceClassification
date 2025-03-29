@@ -34,7 +34,6 @@ class BasicBlock(nn.Module):
         return out
     
 class Block(nn.Module):
-    # 卷积核变化的倍数 
     expansion = 4
 
     def __init__(self, in_channel, out_channel, stride=1, downsample=None,
