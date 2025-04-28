@@ -18,9 +18,8 @@ def extract(signal, window_size=2048, hop_size=512, mel_bins=128, sample_rate=22
     return logmel_spc[:-1, ]
 
 
-def mfcc(spectrum, num_filters=48):
-
-    num_ceps = 128
+def mfcc(spectrum, num_filters=48, num_ceps=256):
+    
     mfccs = np.zeros(num_ceps)
     mel_spectrum = librosa.feature.melspectrogram(S=spectrum, n_mels=num_filters)
     log_mel_spectrum = librosa.power_to_db(mel_spectrum)

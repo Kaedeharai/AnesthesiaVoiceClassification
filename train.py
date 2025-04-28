@@ -1,94 +1,46 @@
 import os
 import sys
-import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torchvision import transforms
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-
+from logger import *
 from model import *
 from DataSet import *
-
 from torch.utils.tensorboard import SummaryWriter
-from sklearn.metrics import confusion_matrix
-import seaborn as sns
-import numpy as np
-write = SummaryWriter('runs/resnet50_binary_mel')
-
-
-class Logger(object):
-    def __init__(self, filename='default.log', add_flag=True, stream=sys.stdout):
-        self.terminal = stream
-        # print("filename:", filename)
-        self.filename = filename
-        self.add_flag = add_flag
-        # self.log = open(filename, 'a+')
-
-    def write(self, message):
-        if self.add_flag:
-            with open(self.filename, 'a+') as log:
-                self.terminal.write(message)
-                log.write(message)
-        else:
-            with open(self.filename, 'w') as log:
-                self.terminal.write(message)
-                log.write(message)
-
-    def flush(self):
-        pass
+write = SummaryWriter('runs/resnet18_binary_mfcc_sec')
 
 
 def main():
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    # print("using {} device.".format(device))
-
     batch_size = 32
-    # nw = min([os.cpu_count(), batch_size if batch_size > 1 else 0, 6])
-    # print('Using {} dataloader workers every process'.format(nw))
-    nw = 0
-
-    sys.stdout = Logger("Train50Bin_mel.log", sys.stdout)
-
-    # data_transform = {
-    #     "train": transforms.Compose([transforms.RandomResizedCrop(224),
-    #                                  transforms.RandomHorizontalFlip(),
-    #                                  transforms.ToTensor(),
-    #                                  transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])]),
-    #                                 # transforms.Normalize([mean, mean, mean], [std, std, std])]),
-    #     "val": transforms.Compose([transforms.Resize(256),
-    #                                transforms.CenterCrop(224),
-    #                                transforms.ToTensor(),
-    #                                transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])}
-    #                                # transforms.Normalize([mean, mean, mean], [std, std, std])])}
+    nw = min([os.cpu_count(), batch_size if batch_size > 1 else 0, 6])
+    sys.stdout = Logger("Train18Bin_mfcc_sec.log", sys.stdout)
 
     method = "mel"
     # method = "mfcc"
 
     train_dataset = AudioDataSet(data_path=os.path.join(method, "train"),
                                  json_path=os.path.join(method, "train.json"))
-                                #  transform=data_transform["train"])
-
     train_num = len(train_dataset)
     train_loader = DataLoader(train_dataset,
-                              batch_size=batch_size, shuffle=False,
+                              batch_size=batch_size,
+                              shuffle=True,
                               num_workers=nw)
-
 
     validate_dataset = AudioDataSet(data_path=os.path.join(method, "val"),
                                     json_path=os.path.join(method, "val.json"))
-                                    # transform=data_transform["train"])
-
     val_num = len(validate_dataset)
     validate_loader = DataLoader(validate_dataset,
-                                 batch_size=batch_size, shuffle=False,
+                                 batch_size=batch_size,
+                                 shuffle=False,
                                  num_workers=nw)
 
 
     net = resnet18(num_classes=2)
-    model_weight_path = "resnet18pth.pth"
+    model_weight_path = "./resNet18_bin_mfcc.pth"
 
     state_dict = torch.load(model_weight_path, map_location=torch.device('cpu'))
     state_dict.pop('fc.weight', None)
@@ -98,22 +50,26 @@ def main():
 
 
     loss_function = nn.CrossEntropyLoss()
-
     params = [p for p in net.parameters() if p.requires_grad]
-    optimizer = optim.Adam(params, lr=0.0001)
+    optimizer = optim.Adam(params, lr=0.001)
 
-    epochs = 100
+    epochs = 200
     best_acc = 0.0
-    save_path = './resNet18_bin_mel.pth'
+    save_path = './resNet18_bin_mfcc_sec.pth'
     train_steps = len(train_loader)
+    
     for epoch in range(epochs):
-        # train
-        net.train()
-        running_loss = 0.0
-        # train_bar = tqdm(train_loader, file=sys.stdout)
+        all_preds = []
+        all_labels = []
+        val_acc = 0.0
+        val_loss = 0.0
+        train_loss = 0.0
 
+
+        net.train()
         for step, data in enumerate(train_loader, start=0):
             images, labels = data
+
             optimizer.zero_grad()
             logits = net(images.to(device))
             loss = loss_function(logits, labels.to(device))
@@ -121,85 +77,54 @@ def main():
             loss.backward()
             optimizer.step()
 
-            running_loss += loss.item()
-            write.add_scalar('train_loss', loss.item(), epoch * train_steps + step)
-
-            print('[epoch %d, batch %d] loss: %.03f' %
-                  (epoch + 1, step + 1, loss.item()))
-            # train_bar.desc = "train epoch[{}/{}] loss:{:.3f}".format(epoch + 1,
-            #                                                          epochs,
-            #                                                          loss)
-
-            if step % 10 == 0:
-                write.add_scalar('train_loss_curve', running_loss / (step + 1), epoch * train_steps + step)
+            train_loss += loss.item()
+            write.add_scalar('perbatch_train_loss', loss.item(), epoch * train_steps + step)
+            write.add_scalar('average_train_loss_curve', train_loss / (step + 1), epoch * train_steps + step)
+            
+            print('[epoch %d, batch %d] batchloss: %.03f' %(epoch + 1, step + 1, loss.item()))
 
 
-        all_preds = []
-        all_labels = []
-        acc = 0.0
-        val_loss = 0.0
         net.eval()
         with torch.no_grad():
             val_bar = tqdm(validate_loader, file=sys.stdout)
             for val_data in val_bar:
                 val_images, val_labels = val_data
-                outputs = net(val_images.to(device))
-                # loss = loss_function(outputs, test_labels)
+                logits = net(val_images.to(device))
+                # probs = F.softmax(logits, dim=1)
+                _, predicted = torch.max(logits, dim=1)
 
-                predict_y = torch.max(outputs, dim=1)[1]
-                acc += torch.eq(predict_y, val_labels.to(device)).sum().item()
-                write.add_scalar('acc', acc, epoch * train_steps + step)
-                
-                loss = loss_function(outputs, val_labels.to(device))
+                perbatch_acc = torch.eq(predicted, val_labels.to(device)).sum().item()
+                write.add_scalar('perbatch_val_acc', perbatch_acc, epoch * train_steps + step)
+
+                val_acc += perbatch_acc
+                write.add_scalar('sum_acc', val_acc, epoch * train_steps + step)
+
+                loss = loss_function(logits, val_labels.to(device))
                 val_loss += loss.item()
-                
-                all_preds.extend(predict_y.cpu().numpy())
+
+                all_preds.extend(predicted.cpu().numpy())
                 all_labels.extend(val_labels.cpu().numpy())
-                val_bar.desc = "valid epoch[{}/{}] loss:{:.3f}".format(epoch + 1,
+                val_bar.desc = "valid epoch[{}/{}] batchloss:{:.3f}".format(epoch + 1,
                                                                        epochs,
-                                                                       loss)
+                                                                       loss.item())
 
                 write.add_scalar('val_loss_curve', val_loss / len(validate_loader), epoch)
 
         if epoch % 10 == 0:
-
-            cm = confusion_matrix(all_labels, all_preds)
-            plt.figure(figsize=(10, 8))
-            sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=['Class 0', 'Class 1'], yticklabels=['Class 0', 'Class 1'])
-            plt.xlabel('Predicted')
-            plt.ylabel('True')
-            plt.title('Confusion Matrix')
-            plt.savefig(f'first_18_mel/confusion_matrix_epoch_{epoch}.png')
-            plt.close()
+            cm = ConfusionMatrixCurve(all_labels, all_preds, num_classes=2)
+            cm.plot(epoch, "18_binary_mfcc_sec")
 
 
-        val_accurate = acc / val_num
+        val_accurate = val_acc / val_num
         write.add_scalar('val_accuracy', val_accurate, epoch)
-        print('[epoch %d] train_loss: %.3f  val_accuracy: %.3f' %
-              (epoch + 1, running_loss / train_steps, val_accurate))
+        print('[epoch %d] train_loss: %.3f  val_accuracy: %.3f' %(epoch + 1, train_loss / train_steps, val_accurate))
 
         if val_accurate > best_acc:
             best_acc = val_accurate
             torch.save(net.state_dict(), save_path)
 
     write.close()
-    
-    
-    # 释放未使用的 GPU 内存
-    torch.cuda.empty_cache()
 
 
 if __name__ == '__main__':
     main()
-
-
-
-#TODO draw train loss curve, val loss curve,
-#TODO every 10 epochs, val acc --> curve, confusion matrix sklearn --> figure, json, classification_report
-
-
-#TODO train dataset shuffle, augmentation --> train model, val --> train dataset, val loss decrease very low
-#TODO dataset --> normalization , min_max . augmenatation
-
-
-#TODO model ? 
