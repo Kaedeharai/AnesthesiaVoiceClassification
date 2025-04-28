@@ -3,21 +3,19 @@ import json
 from torch.utils.data import Dataset
 import numpy as np
 from Preprocessing import *
-from PIL import Image
 import torch
-
 
 class AudioDataSet(Dataset):
 
     classes = ["before", "after", "recovery"]
     default_class_to_idx = {_class: i for i, _class in enumerate(classes)}
 
-    def __init__(self, data_path, json_path, transform=None, class_to_idx=None):
+    def __init__(self, data_path, json_path, transform=None, class_to_idx=None, method=None):
 
         self.transform = transform
         self.data_path = data_path
         self.class_to_idx = class_to_idx if class_to_idx is not None else self.default_class_to_idx
-        
+
         with open(json_path, 'r', encoding="utf-8") as f:
             self.json_dict = json.load(f)
 
@@ -38,7 +36,7 @@ class AudioDataSet(Dataset):
         data = self.json_bin[index]
         featrue_path = os.path.join(self.data_path, data['featrue'])
         label = data['label']
-        label = torch.tensor(label, dtype=torch.long)
+        Label = torch.tensor(label, dtype=torch.long)
 
         Data = np.load(featrue_path)
         Data = np.stack([Data] * 3, axis=-1)
@@ -49,7 +47,7 @@ class AudioDataSet(Dataset):
 
         # feature = torch.tensor(feature, dtype=torch.float32)
     
-        if self.transform is not None:
-            feature = self.transform(feature)
+        # if self.transform is not None:
+        #     feature = self.transform(feature)
     
-        return Data, label
+        return Data, Label

@@ -38,7 +38,8 @@ def process_folder(input_folder, output_folder, threshold=-40.0):
                 clean_and_save_audio(input_file_path, output_file_path, threshold)
 
 
-input_folder = "OriginalData/xwmf"
-output_folder = "rmslience"
+input_folder = "OriginalData/jdsu"
+output_folder = "rmslience/js"
+os.makedirs(output_folder, exist_ok=True)
 process_folder(input_folder, output_folder)
 print("Done")

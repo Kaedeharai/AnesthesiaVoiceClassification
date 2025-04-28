@@ -8,10 +8,16 @@ def get_duration_wave(file_path):
 
 def process_audio(file_path, median):
     audio = AudioSegment.from_file(file_path, "wav")
+    audio = audio.set_frame_rate(22050).set_channels(1).set_sample_width(2)
     wave_dur = len(audio) / 1000.0
     base_name, ext = os.path.splitext(file_path)
 
     if wave_dur >= median:
+        
+        sample_rate = audio.frame_rate
+        chunk_samples = int(median * sample_rate)
+        overlap_samples = int(chunk_samples * 0.2)
+
         cut_parameters = np.arange(0, wave_dur, median * 0.8)
         start_time = int(0)
         for i, t in enumerate(cut_parameters):
@@ -38,20 +44,8 @@ def process_audio(file_path, median):
         extended_audio.export(f"{base_name}_0{ext}", format="wav")
         os.remove(file_path)
 
+median = 10
 
-# dur = []
-# for filename in os.listdir('data/train'):
-#     file_path = os.path.join('data/train', filename)
-#     dur.append(get_duration_wave(file_path))
-
-
-# a_array = np.array(dur)
-# median = np.median(a_array)
-# median = int(median) + 1
-# print(median)
-
-median = 8
-
-for filename in os.listdir('rmslience'):
-    file_path = os.path.join('rmslience', filename)
+for filename in os.listdir('rmslience/js'):
+    file_path = os.path.join('rmslience/js', filename)
     process_audio(file_path, median)

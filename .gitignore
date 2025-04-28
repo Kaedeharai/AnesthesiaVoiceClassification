@@ -1,6 +1,18 @@
 __pycache__/DataSet.cpython-39.pyc
 __pycache__/model.cpython-39.pyc
 __pycache__/Preprocessing.cpython-39.pyc
-.vscode\settings.json
+__pycache__/__init__.cpython-39.pyc
+__pycache__/logger.cpython-39.pyc
+.vscode/settings.json
 
+mel/train
+mel/test
+mel/val
+mfcc/train
+mfcc/test
+mfcc/val
 
+Train18Bin_mfcc.log
+Train50Bin_mfcc.log
+resnet50pth.pth
+resnet18pth.pth
