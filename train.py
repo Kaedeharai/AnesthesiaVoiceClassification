@@ -12,12 +12,19 @@ from torch.utils.tensorboard import SummaryWriter
 write = SummaryWriter('runs/resnet18_binary_mfcc_sec')
 
 
+def train():
+    return
+
+def validate():
+    return
+
+
 def main():
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     batch_size = 32
     nw = min([os.cpu_count(), batch_size if batch_size > 1 else 0, 6])
-    sys.stdout = Logger("Train18Bin_mfcc_sec.log", sys.stdout)
+    sys.stdout = Logger("log/Train18Bin_mfcc_sec.log", sys.stdout)
 
     method = "mel"
     # method = "mfcc"

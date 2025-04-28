@@ -13,6 +13,11 @@ def load_data_from_folder(folder_path):
                 file_paths.append(os.path.join(root, file))
     return file_paths
 
+
+def pridict():
+    return
+
+
 def main():
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
