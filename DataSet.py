@@ -5,6 +5,7 @@ import numpy as np
 from Preprocessing import *
 import torch
 
+
 class AudioDataSet(Dataset):
 
     classes = ["before", "after", "recovery"]
@@ -21,7 +22,6 @@ class AudioDataSet(Dataset):
 
         self.json_bin = []
         for data in self.json_dict:
-
             if data['label'] == "before" or data['label'] == "after":
                 self.json_bin.append(data)
                 data['label'] = self.class_to_idx[data['label']]
@@ -31,11 +31,13 @@ class AudioDataSet(Dataset):
 
         return len(self.json_bin)
     
+
     def __getitem__(self, index): 
 
         data = self.json_bin[index]
         featrue_path = os.path.join(self.data_path, data['featrue'])
         label = data['label']
+
         Label = torch.tensor(label, dtype=torch.long)
 
         Data = np.load(featrue_path)
@@ -43,11 +45,9 @@ class AudioDataSet(Dataset):
         Data = Data.astype(np.uint8)
         Data = torch.tensor(Data, dtype=torch.float32)
         Data = Data.permute(2, 0, 1)
-        # Data = Image.fromarray(Data)
 
         # feature = torch.tensor(feature, dtype=torch.float32)
-    
         # if self.transform is not None:
         #     feature = self.transform(feature)
-    
+
         return Data, Label

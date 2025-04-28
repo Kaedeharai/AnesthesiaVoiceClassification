@@ -12,7 +12,6 @@ mfcc/train
 mfcc/test
 mfcc/val
 
-Train18Bin_mfcc.log
-Train50Bin_mfcc.log
-resnet50pth.pth
-resnet18pth.pth
+pthfiles/
+runs/
+log/
