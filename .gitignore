@@ -1,9 +1,5 @@
-__pycache__/DataSet.cpython-39.pyc
-__pycache__/model.cpython-39.pyc
-__pycache__/Preprocessing.cpython-39.pyc
-__pycache__/__init__.cpython-39.pyc
-__pycache__/logger.cpython-39.pyc
-.vscode/settings.json
+__pycache__/
+.vscode/
 
 mel/train
 mel/test
@@ -12,6 +8,5 @@ mfcc/train
 mfcc/test
 mfcc/val
 
-pthfiles/
+pth_files/
 runs/
-log/
