@@ -67,7 +67,6 @@ class AccuracyCurve():
         plt.title('Accuracy Curve')
         plt.legend()
         plt.savefig(os.path.join(save_path, f'accuracy_curve_{epoch}.png'))
-        # plt.show()
         plt.close()
 
 
@@ -86,7 +85,6 @@ class PrecisionRecallCurve():
         plt.title('Precision-Recall Curve')
         plt.legend()
         plt.savefig(os.path.join(save_path, f'precision_recall_curve_{epoch}.png'))
-        # plt.show()
         plt.close()
 
 
@@ -129,12 +127,9 @@ def plot_confidence_distribution(
     if plot_type == "boxplot" and labels is None:
         raise ValueError("箱线图需要提供真实标签 `labels`")
 
-    # 初始化画布
     plt.figure(figsize=kwargs.get("figsize", (10, 6)))
 
-    # --------------------------
-    # 1. 绘制直方图
-    # --------------------------
+    # 绘制直方图
     if plot_type == "histogram":
         title = kwargs.get("title", "Confidence Distribution")
         color = kwargs.get("color", "skyblue")
@@ -161,10 +156,7 @@ def plot_confidence_distribution(
         plt.ylabel("Count")
         if split_correct:
             plt.legend()
-
-    # --------------------------
-    # 2. 绘制分类别箱线图
-    # --------------------------
+    # 绘制分类别箱线图
     elif plot_type == "boxplot":
         # 确保类别名称与标签匹配
         unique_labels = np.unique(labels)
@@ -185,10 +177,7 @@ def plot_confidence_distribution(
         plt.xlabel("Class")
         plt.ylabel("Confidence")
         plt.xticks(rotation=45)
-
-    # --------------------------
-    # 3. 绘制校准曲线
-    # --------------------------
+    # 绘制校准曲线
     elif plot_type == "calibration_curve":
         prob_true, prob_pred = calibration_curve(labels, confidences, n_bins=10)
         plt.plot(prob_pred, prob_true, marker="o", label="Model")
@@ -197,11 +186,9 @@ def plot_confidence_distribution(
         plt.xlabel("Mean Predicted Confidence")
         plt.ylabel("Fraction of Positives")
         plt.legend()
-
     else:
         raise ValueError(f"不支持的绘图类型: {plot_type}")
 
-    # 保存或显示
     if save_path:
         plt.savefig(save_path, bbox_inches="tight")
         print(f"图表已保存至 {save_path}")
