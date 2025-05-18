@@ -1,5 +1,6 @@
 import torch.nn as nn
 import torch
+import sys
 
 
 class BasicBlock(nn.Module):
@@ -32,7 +33,7 @@ class BasicBlock(nn.Module):
         out = self.relu(out)
 
         return out
-    
+
 class Block(nn.Module):
     expansion = 4
 
@@ -88,7 +89,7 @@ class ResNet(nn.Module):
                  include_top=True,
                  groups=1,
                  width_per_group=64):
-        
+
         super(ResNet, self).__init__()
         self.include_top = include_top
         self.in_channel = 64
@@ -160,10 +161,10 @@ class ResNet(nn.Module):
 
 def resnet50(num_classes=1000, include_top=True):
 
-    return ResNet(Block, [3, 4, 6, 3], num_classes=num_classes, include_top=include_top)
+    return ResNet(Block, [3, 4, 6, 3], num_classes=num_classes, include_top=include_top), sys._getframe().f_code.co_name
 
 
 
 def resnet18(num_classes=1000, include_top=True):
 
-    return ResNet(BasicBlock, [2, 2, 2, 2], num_classes=num_classes, include_top=include_top)
+    return ResNet(BasicBlock, [2, 2, 2, 2], num_classes=num_classes, include_top=include_top), sys._getframe().f_code.co_name
